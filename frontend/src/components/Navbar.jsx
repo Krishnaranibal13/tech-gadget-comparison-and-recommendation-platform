@@ -1,229 +1,187 @@
-import React, { useState } from "react";
-import {
-  Link,
-  NavLink
-} from "react-router-dom";
 
+import React, { useEffect, useState } from "react";
 import {
-  CircleUserRound,
-  GitCompareArrows,
+  ArrowRight,
+  GitCompare,
+  House,
   Menu,
   Search,
   Sparkles,
-  X
+  Smartphone,
+  UserRound,
+  X,
 } from "lucide-react";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
+const links = [
+  { to: "/", label: "Home", icon: House, end: true },
+  { to: "/gadgets", label: "Gadgets", icon: Smartphone },
+  { to: "/compare", label: "Compare", icon: GitCompare },
+  { to: "/recommend", label: "Recommendations", icon: Sparkles },
+];
 
 function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [menuOpen, setMenuOpen] =
-    useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-
-  const closeMenu = () => {
+  useEffect(() => {
     setMenuOpen(false);
-  };
+    setSearchOpen(false);
+  }, [location.pathname, location.search]);
 
+  function handleSearch(event) {
+    event.preventDefault();
 
-  const navClass = ({ isActive }) =>
-    isActive
-      ? "nav-link active"
-      : "nav-link";
+    const query = searchQuery.trim();
 
+    navigate(
+      query
+        ? `/gadgets?search=${encodeURIComponent(query)}`
+        : "/gadgets"
+    );
+
+    setMenuOpen(false);
+    setSearchOpen(false);
+  }
+
+  function closeMenu() {
+    setMenuOpen(false);
+  }
 
   return (
-    <header className="navbar">
-
-      <div className="navbar-inner">
-
-        {/* BRAND */}
-
+    <header className="tc-navbar">
+      <div className="tc-navbar-inner">
         <Link
           to="/"
-          className="brand"
+          className="tc-brand"
+          aria-label="TechCompare home"
           onClick={closeMenu}
         >
+          <span className="tc-brand-mark">T</span>
 
-          <span className="brand-mark">
-            T
+          <span className="tc-brand-copy">
+            <strong>TechCompare</strong>
+            <small>Choose with confidence</small>
           </span>
-
-          <span className="brand-text">
-            TechCompare
-          </span>
-
         </Link>
 
+        {/* One navigation list for desktop and mobile */}
+        <nav
+          id="tc-main-navigation"
+          className={`tc-nav-menu ${menuOpen ? "is-open" : ""}`}
+          aria-label="Main navigation"
+        >
+          {links.map((item) => {
+            const Icon = item.icon;
 
-        {/* DESKTOP NAVIGATION */}
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `tc-nav-link ${isActive ? "is-active" : ""}`
+                }
+              >
+                <Icon size={17} strokeWidth={1.8} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
 
-        <nav className="nav-links desktop-nav">
+          <div className="tc-nav-mobile-auth">
+            <Link
+              to="/login"
+              className="tc-nav-mobile-login"
+              onClick={closeMenu}
+            >
+              <UserRound size={17} />
+              Sign in
+            </Link>
 
-          <NavLink
-            to="/"
-            className={navClass}
-          >
-            Home
-          </NavLink>
-
-
-          <NavLink
-            to="/gadgets"
-            className={navClass}
-          >
-            Gadgets
-          </NavLink>
-
-
-          <NavLink
-            to="/compare"
-            className={navClass}
-          >
-
-            <GitCompareArrows size={15} />
-
-            Compare
-
-          </NavLink>
-
-
-          <NavLink
-            to="/recommend"
-            className={navClass}
-          >
-
-            <Sparkles size={15} />
-
-            Recommendations
-
-          </NavLink>
-
+            <Link
+              to="/register"
+              className="tc-get-started tc-nav-mobile-register"
+              onClick={closeMenu}
+            >
+              Create account
+              <ArrowRight size={16} />
+            </Link>
+          </div>
         </nav>
 
+        <div className="tc-navbar-actions">
+          {searchOpen && (
+            <form
+              className="tc-nav-search-form"
+              onSubmit={handleSearch}
+              role="search"
+            >
+              <Search size={17} aria-hidden="true" />
 
-        {/* RIGHT SIDE */}
+              <input
+                type="search"
+                autoFocus
+                aria-label="Search gadgets"
+                placeholder="Search gadgets..."
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
+                }
+              />
 
-        <div className="nav-actions">
-
-          <Link
-            to="/gadgets"
-            className="nav-icon-button"
-            aria-label="Search gadgets"
-          >
-            <Search size={17} />
-          </Link>
-
-
-          <Link
-            to="/login"
-            className="nav-login"
-          >
-
-            <CircleUserRound size={16} />
-
-            Login
-
-          </Link>
-
-
-          <Link
-            to="/register"
-            className="nav-register"
-          >
-            Get Started
-          </Link>
-
+              <button type="submit" aria-label="Submit search">
+                <ArrowRight size={17} />
+              </button>
+            </form>
+          )}
 
           <button
             type="button"
-            className="mobile-menu-button"
-            onClick={() =>
-              setMenuOpen(!menuOpen)
-            }
-            aria-label="Open navigation"
+            className={`tc-search-trigger ${
+              searchOpen ? "is-open" : ""
+            }`}
+            aria-label={searchOpen ? "Close search" : "Search gadgets"}
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((previous) => !previous)}
           >
-
-            {menuOpen ? (
-              <X size={20} />
-            ) : (
-              <Menu size={20} />
-            )}
-
+            {searchOpen ? <X size={19} /> : <Search size={19} />}
           </button>
 
+          <Link to="/login" className="tc-login-link">
+            <UserRound size={17} />
+            <span>Sign in</span>
+          </Link>
+
+          <Link to="/register" className="tc-get-started tc-desktop-cta">
+            Get started
+            <ArrowRight size={16} />
+          </Link>
+
+          <button
+            type="button"
+            className="tc-mobile-menu-toggle"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            aria-controls="tc-main-navigation"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((previous) => !previous)}
+          >
+            {menuOpen ? <X size={21} /> : <Menu size={21} />}
+          </button>
         </div>
-
       </div>
-
-
-      {/* MOBILE NAVIGATION */}
-
-      {menuOpen && (
-
-        <nav className="mobile-nav">
-
-          <NavLink
-            to="/"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            Home
-          </NavLink>
-
-
-          <NavLink
-            to="/gadgets"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            Gadgets
-          </NavLink>
-
-
-          <NavLink
-            to="/compare"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            <GitCompareArrows size={15} />
-            Compare
-          </NavLink>
-
-
-          <NavLink
-            to="/recommend"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            <Sparkles size={15} />
-            Recommendations
-          </NavLink>
-
-
-          <NavLink
-            to="/login"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            Login
-          </NavLink>
-
-
-          <NavLink
-            to="/register"
-            className={navClass}
-            onClick={closeMenu}
-          >
-            Get Started
-          </NavLink>
-
-        </nav>
-
-      )}
-
     </header>
   );
 }
-
 
 export default Navbar;

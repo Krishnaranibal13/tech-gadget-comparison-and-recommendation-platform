@@ -1,12 +1,6 @@
-import React, {
-  useState
-} from "react";
 
-import {
-  Link,
-  useNavigate
-} from "react-router-dom";
-
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   CheckCircle2,
@@ -15,532 +9,323 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
+  UserRound,
   Sparkles,
-  UserRound
 } from "lucide-react";
-
 import API_BASE_URL from "../api";
 
-
 function Register() {
+  const navigate = useNavigate();
 
-  const navigate =
-    useNavigate();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
 
-  const [form, setForm] =
-    useState({
-      username: "",
-      email: "",
-      password: ""
-    });
+    if (fullName.trim().length < 2) {
+      setError("Please enter your full name.");
+      return;
+    }
 
+    if (password.length < 8) {
+      setError("Choose a password with at least 8 characters.");
+      return;
+    }
 
-  const [showPassword, setShowPassword] =
-    useState(false);
+    if (password !== confirmPassword) {
+      setError("Your passwords do not match.");
+      return;
+    }
 
+    if (!agreeToTerms) {
+      setError("Please confirm that you agree to the terms.");
+      return;
+    }
 
-  const [loading, setLoading] =
-    useState(false);
+    setLoading(true);
 
-
-  const [message, setMessage] =
-    useState("");
-
-
-  const [error, setError] =
-    useState("");
-
-
-  const handleChange =
-    (event) => {
-
-      setForm({
-        ...form,
-        [event.target.name]:
-          event.target.value
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // Email is used as the username for compatibility
+          // with backends that authenticate by username.
+          username: email.trim(),
+          email: email.trim(),
+          full_name: fullName.trim(),
+          password,
+        }),
       });
 
-    };
+      const data = await response.json().catch(() => ({}));
 
+      if (!response.ok) {
+        const detail = data.detail;
+        const message =
+          typeof detail === "string"
+            ? detail
+            : Array.isArray(detail)
+              ? detail.map((item) => item.msg).join(", ")
+              : data.message || "Unable to create your account.";
 
-  const passwordLength =
-    form.password.length;
-
-
-  const passwordStrength =
-    passwordLength >= 10
-      ? "Strong"
-      : passwordLength >= 6
-      ? "Medium"
-      : "Weak";
-
-
-  const passwordWidth =
-    passwordLength >= 10
-      ? "100%"
-      : passwordLength >= 6
-      ? "65%"
-      : passwordLength > 0
-      ? "30%"
-      : "0%";
-
-
-  const handleSubmit =
-    async (event) => {
-
-      event.preventDefault();
-
-      setLoading(true);
-      setError("");
-      setMessage("");
-
-
-      try {
-
-        const response =
-          await fetch(
-            `${API_BASE_URL}/auth/register`,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify(form)
-            }
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.detail ||
-            "Registration failed."
-          );
-
-        }
-
-
-        setMessage(
-          "Account created successfully. Redirecting..."
-        );
-
-
-        setTimeout(() => {
-          navigate("/login");
-        }, 900);
-
-
-      } catch (err) {
-
-        console.error(err);
-
-        setError(
-          err.message ||
-          "Unable to register."
-        );
-
-      } finally {
-
-        setLoading(false);
-
+        throw new Error(message);
       }
 
-    };
-
+      navigate("/login", {
+        state: {
+          notice: "Your account was created. Please sign in.",
+        },
+      });
+    } catch (err) {
+      setError(
+        err.message ||
+          "Could not connect to the server. Check that the backend is running."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="auth-page">
+      <div className="auth-frame auth-frame-register">
+        <section className="auth-story">
+          <div className="auth-story-top">
+            <div className="auth-brand-mark">T</div>
+            <span className="auth-brand-name">TechCompare</span>
+          </div>
 
-      <div className="auth-shell">
-
-        {/* VISUAL PANEL */}
-
-        <section className="auth-visual">
-
-          <img
-            src="/images/tech-products.jpg"
-            alt="Modern technology products"
-            className="auth-visual-image"
-          />
-
-
-          <div className="auth-visual-overlay" />
-
-
-          <div className="visual-brand">
-
-            <span className="brand-mark">
-              T
+          <div className="auth-story-content">
+            <span className="auth-kicker">
+              <Sparkles size={15} />
+              A SMARTER WAY TO CHOOSE
             </span>
 
-            <strong>
-              TechCompare
-            </strong>
-
-          </div>
-
-
-          <div className="visual-floating-card">
-
-            <div className="floating-card-icon">
-              <Sparkles size={17} />
-            </div>
-
-            <div>
-
-              <span>
-                DISCOVER BETTER
-              </span>
-
-              <strong>
-                Tech that fits you
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div className="auth-visual-content">
-
-            <div className="visual-pill">
-
-              <Sparkles size={14} />
-
-              WELCOME TO TECHCOMPARE
-
-            </div>
-
-
-            <h2>
-              Your next gadget
+            <h1>
+              Your next
+              <br />
+              great choice
+              <br />
               starts here.
-            </h2>
-
+            </h1>
 
             <p>
-              Explore products, compare important
-              metrics and discover options suited
-              to the way you use technology.
+              Create your account to explore gadgets, compare
+              features, and find recommendations tailored to you.
             </p>
 
-
-            <div className="visual-benefits">
-
+            <div className="auth-benefits">
               <div>
-                <CheckCircle2 size={17} />
-                <span>
-                  Explore the product catalog
-                </span>
+                <CheckCircle2 size={18} />
+                <span>Explore your tech options</span>
               </div>
-
               <div>
-                <CheckCircle2 size={17} />
-                <span>
-                  Compare products side by side
-                </span>
+                <CheckCircle2 size={18} />
+                <span>Compare important features</span>
               </div>
-
               <div>
-                <CheckCircle2 size={17} />
-                <span>
-                  Get personalized recommendations
-                </span>
+                <CheckCircle2 size={18} />
+                <span>Find gadgets for your needs</span>
               </div>
-
             </div>
-
           </div>
 
+          <div className="auth-story-bottom">
+            <ShieldCheck size={17} />
+            <span>A simpler way to make informed tech decisions.</span>
+          </div>
+
+          <div className="auth-orbit auth-orbit-one" />
+          <div className="auth-orbit auth-orbit-two" />
         </section>
 
+        <section className="auth-form-panel">
+          <div className="auth-mobile-brand">
+            <span className="auth-brand-mark">T</span>
+            <span className="auth-brand-name">TechCompare</span>
+          </div>
 
-        {/* FORM PANEL */}
+          <div className="auth-form-heading">
+            <span className="auth-overline">GET STARTED</span>
+            <h2>Create your account.</h2>
+            <p>
+              Enter your details to join TechCompare.
+            </p>
+          </div>
 
-        <section className="auth-content">
+          {error && (
+            <div className="auth-message auth-message-error" role="alert">
+              {error}
+            </div>
+          )}
 
-          <div className="auth-content-inner">
-
-            <div className="mobile-auth-brand">
-
-              <span className="brand-mark">
-                T
-              </span>
-
-              <strong>
-                TechCompare
-              </strong>
-
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label htmlFor="register-full-name">Full name</label>
+              <div className="auth-input-wrap">
+                <UserRound className="auth-input-icon" size={18} />
+                <input
+                  id="register-full-name"
+                  type="text"
+                  value={fullName}
+                  onChange={(event) =>
+                    setFullName(event.target.value)
+                  }
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                  maxLength={100}
+                  required
+                />
+              </div>
             </div>
 
-
-            <div className="auth-heading">
-
-              <span className="eyebrow">
-                GET STARTED
-              </span>
-
-              <h1>
-                Create your account
-              </h1>
-
-              <p>
-                Join TechCompare and start exploring
-                smarter gadget choices.
-              </p>
-
+            <div className="auth-field">
+              <label htmlFor="register-email">Email address</label>
+              <div className="auth-input-wrap">
+                <Mail className="auth-input-icon" size={18} />
+                <input
+                  id="register-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                />
+              </div>
             </div>
 
+            <div className="auth-field">
+              <label htmlFor="register-password">Password</label>
+              <div className="auth-input-wrap">
+                <LockKeyhole className="auth-input-icon" size={18} />
+                <input
+                  id="register-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  placeholder="Create a password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() =>
+                    setShowPassword((previous) => !previous)
+                  }
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff size={19} />
+                  ) : (
+                    <Eye size={19} />
+                  )}
+                </button>
+              </div>
+              <span className="auth-field-hint">
+                Use at least 8 characters.
+              </span>
+            </div>
 
-            <form
-              className="premium-auth-form"
-              onSubmit={handleSubmit}
-            >
-
-              {/* USERNAME */}
-
-              <label className="auth-field">
-
-                <span className="auth-field-label">
-                  Username
-                </span>
-
-                <div className="auth-input-wrapper">
-
-                  <UserRound
-                    size={17}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    placeholder="Choose a username"
-                    autoComplete="username"
-                    required
-                  />
-
-                </div>
-
+            <div className="auth-field">
+              <label htmlFor="register-confirm-password">
+                Confirm password
               </label>
+              <div className="auth-input-wrap">
+                <LockKeyhole className="auth-input-icon" size={18} />
+                <input
+                  id="register-confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) =>
+                    setConfirmPassword(event.target.value)
+                  }
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() =>
+                    setShowConfirmPassword((previous) => !previous)
+                  }
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirmation password"
+                      : "Show confirmation password"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={19} />
+                  ) : (
+                    <Eye size={19} />
+                  )}
+                </button>
+              </div>
+            </div>
 
-
-              {/* EMAIL */}
-
-              <label className="auth-field">
-
-                <span className="auth-field-label">
-                  Email address
-                </span>
-
-                <div className="auth-input-wrapper">
-
-                  <Mail
-                    size={17}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                  />
-
-                </div>
-
-              </label>
-
-
-              {/* PASSWORD */}
-
-              <label className="auth-field">
-
-                <span className="auth-field-label">
-                  Password
-                </span>
-
-                <div className="auth-input-wrapper">
-
-                  <LockKeyhole
-                    size={17}
-                    className="auth-input-icon"
-                  />
-
-                  <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Create a password"
-                    autoComplete="new-password"
-                    required
-                  />
-
-
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() =>
-                      setShowPassword(
-                        !showPassword
-                      )
-                    }
-                  >
-
-                    {showPassword ? (
-                      <EyeOff size={17} />
-                    ) : (
-                      <Eye size={17} />
-                    )}
-
-                  </button>
-
-                </div>
-
-
-                {form.password && (
-
-                  <div className="password-strength">
-
-                    <div className="password-strength-top">
-
-                      <span>
-                        Password strength
-                      </span>
-
-                      <strong>
-                        {passwordStrength}
-                      </strong>
-
-                    </div>
-
-
-                    <div className="password-strength-track">
-
-                      <div
-                        className="password-strength-fill"
-                        style={{
-                          width:
-                            passwordWidth
-                        }}
-                      />
-
-                    </div>
-
-                  </div>
-
-                )}
-
-              </label>
-
-
-              <button
-                type="submit"
-                className="premium-login-button"
-                disabled={loading}
-              >
-
-                {loading ? (
-                  <>
-                    <span className="button-spinner" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    Create account
-                    <ArrowRight size={17} />
-                  </>
-                )}
-
-              </button>
-
-
-              {message && (
-                <div className="auth-success">
-
-                  <CheckCircle2 size={16} />
-
-                  <span>
-                    {message}
-                  </span>
-
-                </div>
-              )}
-
-
-              {error && (
-                <div className="auth-error">
-                  {error}
-                </div>
-              )}
-
-            </form>
-
-
-            <div className="auth-register-prompt">
-
+            <label className="auth-checkbox auth-terms">
+              <input
+                type="checkbox"
+                checked={agreeToTerms}
+                onChange={(event) =>
+                  setAgreeToTerms(event.target.checked)
+                }
+              />
               <span>
-                Already have an account?
+                I agree to use TechCompare responsibly and accept
+                the site's terms.
               </span>
+            </label>
 
-              <Link to="/login">
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={loading}
+            >
+              <span>
+                {loading ? "Creating account..." : "Create account"}
+              </span>
+              {!loading && <ArrowRight size={19} />}
+            </button>
+          </form>
 
-                Sign in
-
-                <ArrowRight size={14} />
-
-              </Link>
-
-            </div>
-
-
-            <div className="auth-trust">
-
-              <ShieldCheck size={16} />
-
-              <div>
-
-                <strong>
-                  Create your account
-                </strong>
-
-                <span>
-                  Use your TechCompare account to
-                  access the platform.
-                </span>
-
-              </div>
-
-            </div>
-
+          <div className="auth-switch">
+            Already have an account?
+            <Link to="/login">
+              Sign in <ArrowRight size={16} />
+            </Link>
           </div>
 
+          <div className="auth-security-note">
+            <ShieldCheck size={17} />
+            <span>
+              Keep your account credentials private and secure.
+            </span>
+          </div>
         </section>
-
       </div>
-
     </div>
   );
 }
-
 
 export default Register;
