@@ -1,0 +1,65 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: gadget-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - gadget-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p"$${MYSQL_ROOT_PASSWORD}" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+    container_name: gadget-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - gadget-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: gadget-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - gadget-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: gadget-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - gadget-network
+
+volumes:
+  mysql_data:
+
+networks:
+  gadget-network:
+    driver: bridge
